@@ -90,6 +90,14 @@ namespace pps_ctrl {
         sleep(1); // wait a second for the power supply voltage to come up (possibly unnecessary)
     }
 
+    void StopPps() {
+        int is_error = -1;
+        is_error = FDwfAnalogOutNodeEnableSet(device_data->handle, 0, AnalogOutNodeCarrier, false);
+        if (is_error == 0) GetError();
+        is_error = FDwfAnalogOutConfigure(device_data->handle, 0, false);
+        if (is_error == 0) GetError();
+    }
+
     void StartPps() {
         int is_error = -1;
         is_error = FDwfAnalogOutNodeEnableSet(device_data->handle, 0, AnalogOutNodeCarrier, true);
@@ -154,7 +162,7 @@ namespace pps_ctrl {
         if (is_error == 0) GetError();
         is_error = FDwfAnalogOutIdleSet(device_data->handle, 1, DwfAnalogOutIdleOffset);
         if (is_error == 0) GetError();
-        is_error = FDwfAnalogOutRunSet(device_data->handle, 1, 0.01); // run for 10ms = 10 pulses
+        is_error = FDwfAnalogOutRunSet(device_data->handle, 1, 0.1); // run for 100ms = 100 pulses
         if (is_error == 0) GetError();
         is_error = FDwfAnalogOutWaitSet(device_data->handle, 1, 0.001); // wait 1ms after trigger to send pulse
         if (is_error == 0) GetError();
@@ -177,7 +185,11 @@ namespace pps_ctrl {
 int main(int argc, char *argv[]) {
 
     if (argc != 2) {
-        std::cerr << "Wrong number of args! Need 2 but got " << argc << std::endl;
+        std::cerr << "Wrong number of args! Need 1 but got " << argc-1 << std::endl;
+        std::cerr << "1 = Init AD3" << std::endl;
+        std::cerr << "2 = Start PPS" << std::endl;
+        std::cerr << "3 = Run Pulse Train" << std::endl;
+        std::cerr << "4 = Stop PPS" << std::endl;
         return 1;
     }
     int operation = std::stoi(argv[1]);
@@ -195,13 +207,22 @@ int main(int argc, char *argv[]) {
     switch (operation) {
         case 1: { // Power on AD3
             pps_ctrl::InitDevice();
+            std::cout << "Powered on AD3.." << std::endl;
             break;
         }
         case 2: { // Configure/Start PPS
             pps_ctrl::StartPps();
+            std::cout << "Started PPS.." << std::endl;
             break;
-       } case 3: { // Configure/Run Pulse Train
+       } 
+       case 3: { // Configure/Run Pulse Train
             pps_ctrl::RunPulseTrain();
+            std::cout << "Sent Pulse Train.." << std::endl;
+            break;
+       } 
+       case 4: { // Stop PPS
+            pps_ctrl::StopPps();                      
+            std::cout << "Stopped PPS.." << std::endl;
             break;
        }
        default: {
@@ -209,6 +230,7 @@ int main(int argc, char *argv[]) {
             std::cerr << "1 = Init AD3" << std::endl;
             std::cerr << "2 = Start PPS" << std::endl;
             std::cerr << "3 = Run Pulse Train" << std::endl;
+            std::cerr << "4 = Stop PPS" << std::endl;
             break;
        }
    }
