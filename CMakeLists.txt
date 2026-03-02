@@ -32,6 +32,7 @@ message("-- WAVEFORMS_LIB: ${WAVEFORMS_LIB}")
 message("-- WAVEFORMS_LIB_DIR: ${WAVEFORMS_LIB_DIR}")
 message("-- WAVEFORMS_INC_DIR: ${WAVEFORMS_INC_DIR}")
 
+#add_executable(${MY_EXE} main.cc)
 add_executable(${MY_EXE} main_dev.cpp)
 target_include_directories(${MY_EXE} PRIVATE ${WAVEFORMS_INC_DIR})
 target_link_libraries(${MY_EXE} ${WAVEFORMS_LIB})

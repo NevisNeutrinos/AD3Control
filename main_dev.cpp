@@ -20,7 +20,7 @@ namespace pps_ctrl {
 
     // Custom waveform, each element is a tick of the 10MHz clock
     // so represents 100ns.
-    size_t NUM_10MHZ_SAMPLES = 10000; // equivalent to 1ms
+    size_t NUM_10MHZ_SAMPLES = 10000; // each sample equivalent to 1ms
     std::vector<double> pulse(NUM_10MHZ_SAMPLES, 0);
     // AD3 device
     Device::Data *device_data;
@@ -98,6 +98,14 @@ namespace pps_ctrl {
         if (is_error == 0) GetError();
     }
 
+    void StopPulseTrain() {
+        int is_error = -1;
+        is_error = FDwfAnalogOutNodeEnableSet(device_data->handle, 1, AnalogOutNodeCarrier, false);
+        if (is_error == 0) GetError();
+        is_error = FDwfAnalogOutConfigure(device_data->handle, 1, false);
+        if (is_error == 0) GetError();
+    }
+
     void StartPps() {
         int is_error = -1;
         is_error = FDwfAnalogOutNodeEnableSet(device_data->handle, 0, AnalogOutNodeCarrier, true);
@@ -164,9 +172,9 @@ namespace pps_ctrl {
         if (is_error == 0) GetError();
         is_error = FDwfAnalogOutRunSet(device_data->handle, 1, 0.1); // run for 100ms = 100 pulses
         if (is_error == 0) GetError();
-        is_error = FDwfAnalogOutWaitSet(device_data->handle, 1, 0.001); // wait 1ms after trigger to send pulse
+        is_error = FDwfAnalogOutWaitSet(device_data->handle, 1, 0.01); // wait 10ms after trigger to send pulse
         if (is_error == 0) GetError();
-        is_error = FDwfAnalogOutRepeatSet(device_data->handle, 1, 0); // only send the pulse once
+        is_error = FDwfAnalogOutRepeatSet(device_data->handle, 1, 1); // only send the pulse once
         if (is_error == 0) GetError();
         is_error = FDwfAnalogOutTriggerSourceSet(device_data->handle, 1, trigsrcExternal1); // trigger pulse train on PPS
         if (is_error == 0) GetError();
@@ -197,6 +205,9 @@ int main(int argc, char *argv[]) {
     // Set one sample high, this is 1 pulse 100ns wide
     pps_ctrl::pulse.at(9) = 1;
 
+    // To keep the AD3 running even after the program ends we need to set the
+    // DwfParamOnClose parameter to 0
+    FDwfParamSet(DwfParamOnClose, 0); // 0 = run, 1 = stop, 2 = shutdown
     // The AD3 device, open it
     pps_ctrl::device_data = device.open("Analog Discovery 3");
     if (pps_ctrl::device_data == nullptr) {
@@ -222,6 +233,7 @@ int main(int argc, char *argv[]) {
        } 
        case 4: { // Stop PPS
             pps_ctrl::StopPps();                      
+            pps_ctrl::StopPulseTrain();                      
             std::cout << "Stopped PPS.." << std::endl;
             break;
        }
@@ -233,7 +245,10 @@ int main(int argc, char *argv[]) {
             std::cerr << "4 = Stop PPS" << std::endl;
             break;
        }
+
    }
+
+   sleep(1);
 
    // Close the device to finish
    device.close(pps_ctrl::device_data);
