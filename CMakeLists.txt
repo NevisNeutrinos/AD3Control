@@ -16,7 +16,7 @@ set(PROJECT_VERSION 1.0)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_CXX_EXTENSIONS OFF)
-set(MY_EXE ad2_test)
+set(MY_EXE ad3_ctrl)
 
 # ## Check OS
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -41,3 +41,6 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 if(MACOSX)
   set_target_properties(${MY_EXE} PROPERTIES BUILD_RPATH "/Library/Frameworks")
 endif(MACOSX)
+
+message("Installing AD3 Controller")
+install(TARGETS ${MY_EXE} DESTINATION /usr/local/bin)
